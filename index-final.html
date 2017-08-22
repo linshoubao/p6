@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+	<script src="http://d3js.org/d3.v3.min.js"></script>
+	<script src="http://dimplejs.org/dist/dimple.v2.0.0.min.js"></script>
+	<style>
+		body{
+			text-align: center;
+			background-color: #EDEDED;
+		}
+
+		.title{
+			font-family: arial;
+			}
+
+		p {
+			text-align: left;
+			padding-left: 450px;
+		}	
+		div.type_buttons{
+			position:fixed;
+			top: 185px;
+			left: 1200px;
+		}
+
+		div.type_buttons div{
+			background-color:#BDB76B;
+			padding: 5px;
+			margin: 10px;
+			font-size: 15PX; 
+		}
+
+		div.text{
+			font:12px sans-serif;
+			width: 700px;
+		}
+
+	</style>
+	<script type="text/javascript">
+		function draw(data) {
+			"use strict";
+			//set the size of svg
+			var margin=100,
+					width=1300-margin,
+					height=400-margin;
+
+			var svg=d3.select("body")
+								.append('svg')
+								.attr('width',width+margin)
+								.attr('height',height+margin)
+								.append('g')
+								.attr('class','chart');
+
+			d3.select('svg')
+				.selectAll('bar')
+				.data(data)
+				.enter()
+				.append('bar');
+				
+			function create_chart(button_label) {
+				var chart1=svg.selectAll('*').remove();
+				chart1=draw_chart(button_label);
+				chart1.draw();
+			};
+
+
+			function draw_chart(button){
+				var myChart = new dimple.chart(svg,data);
+				var x=myChart.addCategoryAxis('x','UniqueCarrier');
+				x.title='The Airlines'
+				var y=myChart.addMeasureAxis('y',button); //draw myChart according to button
+				y.title='The Ratio of Percent'
+				var mySeries=myChart.addSeries(null,dimple.plot.bar);
+				mySeries.afterDraw=function(shape,data) {
+					var s=d3.select(shape),
+							rect={
+								x: parseFloat(s.attr("x")),
+                y: parseFloat(s.attr("y")),
+                width: parseFloat(s.attr("width")),
+                height: parseFloat(s.attr("height"))
+							};
+							
+						svg.append('text')
+							 .attr("x", rect.x + rect.width / 2)
+               .attr("y", rect.y + rect.height / 2 + 3.5)
+                // Centre align
+               .style("text-anchor", "middle")
+               .style("font-size", "10px")
+               .style("font-family", "sans-serif")
+               .style("opacity", 0.6) 
+                // Format the number
+               .text(data.yValue);
+             
+				};
+				
+				return myChart;
+			};
+
+			//create default chart	
+			create_chart('OnTime');
+
+			//create three buttons
+			var button_labels=['OnTime','ArrDelay','Cancel'];
+			var buttons=d3.select('body')
+						  .append('div')
+						  .attr('class','type_buttons')	
+						  .selectAll('div')
+						  .data(button_labels)
+						  .enter()
+						  .append('div')
+						  .text(function(d) {
+						  	return d;
+						  });	
+
+			//create action of buttons	based on click event		  
+			buttons.on('click',function(d) {
+				d3.select('.type_buttons')
+					.selectAll('div')
+					.transition()
+					.duration(500)
+					.style('color','black'); //change the style to the initial
+
+				d3.select(this)
+					.transition()
+					.duration(500)
+					.style('color','white'); //change the style to new status
+				create_chart(d);
+			});
+
+		};
+	</script>
+
+</head>
+<body>
+	<h1 class='title'>
+		<font size="10">The Comparison of Delay in Different Airlines</font>
+	</h1>
+	<p>
+		<font size="2" text-align="left">This chart shows the comparison of delay 20 airlines in 2008 in United States.
+		<br>
+		The button of <b>OnTime</b> is the ratio of flight arrived destionation on time.
+		<br>The button of <b>ArrDelay</b> is the ratio of flight arrived destionation later.
+		<br>The button of <b>Cancel</b> is the ratio of canceled flight.
+		<br>Try to click the buttons to find the ratio of different airplines.
+		</font>
+	</p>
+	<script type="text/javascript">
+		d3.csv("carrier_delay2.csv",draw);		
+	</script>
+
+</body>
+</html>
